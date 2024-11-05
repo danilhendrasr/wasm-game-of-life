@@ -10,6 +10,46 @@ const universe = Universe.new();
 const width = universe.width();
 const height = universe.height();
 
+const fps = new (class {
+  constructor() {
+    this.fps = document.getElementById("fps");
+    this.frames = [];
+    this.lastFrameTimestamp = performance.now();
+  }
+
+  render() {
+    const now = performance.now();
+    const delta = now - this.lastFrameTimestamp;
+    this.lastFrameTimestamp = now;
+    const fps = (1 / delta) * 1000;
+
+    this.frames.push(fps);
+    if (this.frames.length > 100) {
+      this.frames.shift();
+    }
+
+    let min = Infinity;
+    let max = -Infinity;
+
+    let sum = 0;
+    for (let i = 0; i < this.frames.length; i++) {
+      sum += this.frames[i];
+      min = Math.min(this.frames[i], min);
+      max = Math.max(this.frames[i], max);
+    }
+
+    let mean = sum / this.frames.length;
+
+    this.fps.textContent = `
+Frames per second:
+        latest = ${Math.round(fps)}
+avg of last 100 = ${Math.round(mean)}
+min of last 100 = ${Math.round(min)}
+max of last 100 = ${Math.round(max)}
+    `.trim();
+  }
+})();
+
 const canvas = document.getElementById("game-of-life-canvas");
 canvas.width = (CELL_SIZE + 1) * width + 1;
 canvas.height = (CELL_SIZE + 1) * height + 1;
@@ -66,11 +106,12 @@ const drawCells = () => {
 let animationId = null;
 
 const renderLoop = () => {
-  debugger;
-  universe.tick();
+  fps.render();
 
+  universe.tick();
   drawGrid();
   drawCells();
+
   animationId = requestAnimationFrame(renderLoop);
 };
 
